@@ -1,7 +1,16 @@
 const assert = require('assert');
+const vm = require('vm');
 
 var mapGlobalVars = new Map();
 var mapCommands = new Map();
+var objExportData = {};
+
+class TestError extends Error {
+  constructor (...args) {
+    super(...args);
+    this.name = 'TestError';
+  }
+}
 
 var tester = {
   get: function (value) {
@@ -13,7 +22,7 @@ var tester = {
   },
 
   use: function (commands) {
-    let lstCommands = (commands instanceof Array) ? commands : [commands];
+    let lstCommands = Array.isArray(commands) ? commands : [commands];
     lstCommands.forEach(command => { mapCommands.set(command.name, command); });
   },
 
@@ -26,7 +35,7 @@ var tester = {
   },
 
   test: function (testcases) {
-    let lstTestcases = (testcases instanceof Array) ? testcases : [testcases];
+    let lstTestcases = Array.isArray(testcases) ? testcases : [testcases];
     lstTestcases.forEach(function (testcase) {
       if (testcase.description) {
         generateDescription(testcase);
@@ -52,28 +61,39 @@ function generateDescription (testGroup) {
 function generateTest (testcase) {
   if (testcase.skip) {
     it.skip(testcase.test, () => { assert.ok(true); });
-  } else {
-    it(testcase.test, function (done) {
-      let command = mapCommands.get(testcase.command).command;
-      // Todo: catch error, exportData
-      command(evaluateValue(testcase.inputData), function (err, outputData) {
-        if (err) {
-          generateAssert(testcase, err);
-        } else {
-          generateAssert(testcase, outputData);
+    return;
+  }
+
+  it(testcase.test, function (done) {
+    let command = mapCommands.get(testcase.command).command;
+    try {
+      command(evaluateValue(testcase.inputData, objExportData), function (err, outputData) {
+        if (err) throw err;
+
+        generateAssert(testcase, outputData);
+
+        if (testcase.exportData) {
+          objExportData['$' + testcase.exportData] = outputData;
         }
+
         done();
       });
-    });
-  }
+    } catch (err) {
+      if (err instanceof assert.AssertionError || err instanceof TestError) throw err;
+
+      generateAssert(testcase, err);
+      done();
+    }
+  });
 }
 
 function generateAssert (testcase, outputData) {
-  let lstExpectedData = (testcase.expectedData instanceof Array) ? testcase.expectedData : [testcase.expectedData];
-  // Todo: evaluate key
-  let evaledOutputValue = evaluateValue(outputData);
+  if (!testcase.expectedData) throw new TestError(`require expectedData`);
+
+  let lstExpectedData = Array.isArray(testcase.expectedData) ? testcase.expectedData : [testcase.expectedData];
   lstExpectedData.forEach(function (expectedData) {
-    let evaledExpectedValue = evaluateValue(expectedData.value);
+    let evaledOutputValue = evaluateOutputData(expectedData.key, outputData);
+    let evaledExpectedValue = evaluateValue(expectedData.value, objExportData);
     if (expectedData.assert === 'equal') {
       assert.deepStrictEqual(evaledOutputValue, evaledExpectedValue, expectedData.message);
     } else if (expectedData.assert === 'notEqual') {
@@ -85,18 +105,54 @@ function generateAssert (testcase, outputData) {
     } else if (expectedData.assert === 'typeof') {
       assert.strictEqual(typeof evaledOutputValue, evaledExpectedValue, expectedData.message);
     } else if (expectedData.assert === 'ok') {
-      assert.ok(true, expectedData.message);
+      assert.ok(true);
     } else if (expectedData.assert === 'error') {
-      // Todo
+      assert.ok(outputData instanceof Error, expectedData.message);
+      if (!expectedData.key) {
+        assert.strictEqual(outputData.message || undefined, evaledExpectedValue, expectedData.message);
+      } else {
+        assert.deepStrictEqual(evaledOutputValue, evaledExpectedValue, expectedData.message);
+      }
     } else {
-      throw new Error('expectedData.assert ' + JSON.stringify(expectedData.assert) + ' is not recognized');
+      throw new TestError(`expectedData.assert ${JSON.stringify(expectedData.assert)} is not recognized`);
     }
   });
 }
 
-function evaluateValue (value) {
-  // Dummy
-  return value;
+function evaluateOutputData (key, outputData) {
+  if (!key) return outputData;
+
+  if (typeof key !== 'string') throw new TestError('expectedData.key is invalid');
+
+  try {
+    let outputDataKey = (key.indexOf('$outputData') === -1) ? '$outputData.' + key : key;
+    return evaluateValue(outputDataKey, {'$outputData': outputData});
+  } catch (err) {
+    throw new TestError(`${JSON.stringify(key)} cannot be evaluated`);
+  }
+}
+
+function evaluateValue (obj, sourceData) {
+  if (obj && typeof obj === 'object') {
+    for (var prop in obj) {
+      obj[prop] = evaluateValue(obj[prop], sourceData);
+    }
+  } else if (Array.isArray(obj)) {
+    obj.forEach((item, index) => { obj[index] = evaluateValue(item, sourceData); });
+  } else if (typeof obj === 'string') {
+    if (obj.indexOf('$') === -1) return obj;
+
+    // Todo: check existing
+
+    let sandbox = { source: sourceData };
+    try {
+      vm.runInNewContext('evaledExportValue = source.' + obj, sandbox);
+      return sandbox.evaledExportValue;
+    } catch (err) {
+      throw new TestError(`${JSON.stringify(obj)} cannot be evaluated`);
+    }
+  }
+  return obj;
 }
 
 module.exports = tester;
