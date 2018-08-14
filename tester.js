@@ -6,8 +6,8 @@ var mapCommands = new Map();
 var objExportData = {};
 
 class TestError extends Error {
-  constructor (...args) {
-    super(...args);
+  constructor (message) {
+    super(message);
     this.name = 'TestError';
   }
 }
@@ -60,7 +60,7 @@ function generateDescription (testGroup) {
 
 function generateTest (testcase) {
   if (testcase.skip) {
-    it.skip(testcase.test, () => { assert.ok(true); });
+    it.skip(testcase.test);
     return;
   }
 
@@ -73,6 +73,8 @@ function generateTest (testcase) {
         generateAssert(testcase, outputData);
 
         if (testcase.exportData) {
+          if (!testcase.exportData.match(/^[A-Za-z_]\w*$/i)) throw new TestError(`exportData ${JSON.stringify(testcase.exportData)} is invalid`);
+
           objExportData['$' + testcase.exportData] = outputData;
         }
 
@@ -88,30 +90,26 @@ function generateTest (testcase) {
 }
 
 function generateAssert (testcase, outputData) {
-  if (!testcase.expectedData) throw new TestError(`require expectedData`);
-
   let lstExpectedData = Array.isArray(testcase.expectedData) ? testcase.expectedData : [testcase.expectedData];
   lstExpectedData.forEach(function (expectedData) {
-    let evaledOutputValue = evaluateOutputData(expectedData.key, outputData);
-    let evaledExpectedValue = evaluateValue(expectedData.value, objExportData);
     if (expectedData.assert === 'equal') {
-      assert.deepStrictEqual(evaledOutputValue, evaledExpectedValue, expectedData.message);
+      assert.deepStrictEqual(evaluateOutputData(expectedData.key, outputData), evaluateValue(expectedData.value, objExportData), expectedData.message);
     } else if (expectedData.assert === 'notEqual') {
-      assert.notDeepStrictEqual(evaledOutputValue, evaledExpectedValue, expectedData.message);
+      assert.notDeepStrictEqual(evaluateOutputData(expectedData.key, outputData), evaluateValue(expectedData.value, objExportData), expectedData.message);
     } else if (expectedData.assert === 'greater') {
-      assert.ok(evaledOutputValue > evaledExpectedValue, expectedData.message);
+      assert.ok(evaluateOutputData(expectedData.key, outputData) > evaluateValue(expectedData.value, objExportData), expectedData.message);
     } else if (expectedData.assert === 'less') {
-      assert.ok(evaledOutputValue < evaledExpectedValue, expectedData.message);
+      assert.ok(evaluateOutputData(expectedData.key, outputData) < evaluateValue(expectedData.value, objExportData), expectedData.message);
     } else if (expectedData.assert === 'typeof') {
-      assert.strictEqual(typeof evaledOutputValue, evaledExpectedValue, expectedData.message);
+      assert.strictEqual(typeof evaluateOutputData(expectedData.key, outputData), evaluateValue(expectedData.value, objExportData), expectedData.message);
     } else if (expectedData.assert === 'ok') {
       assert.ok(true);
     } else if (expectedData.assert === 'error') {
       assert.ok(outputData instanceof Error, expectedData.message);
       if (!expectedData.key) {
-        assert.strictEqual(outputData.message || undefined, evaledExpectedValue, expectedData.message);
+        assert.strictEqual(outputData.message || undefined, evaluateValue(expectedData.value, objExportData), expectedData.message);
       } else {
-        assert.deepStrictEqual(evaledOutputValue, evaledExpectedValue, expectedData.message);
+        assert.deepStrictEqual(evaluateOutputData(expectedData.key, outputData), evaluateValue(expectedData.value, objExportData), expectedData.message);
       }
     } else {
       throw new TestError(`expectedData.assert ${JSON.stringify(expectedData.assert)} is not recognized`);
@@ -122,13 +120,13 @@ function generateAssert (testcase, outputData) {
 function evaluateOutputData (key, outputData) {
   if (!key) return outputData;
 
-  if (typeof key !== 'string') throw new TestError('expectedData.key is invalid');
+  if (typeof key !== 'string') throw new TestError(`expectedData.key ${JSON.stringify(key)} is invalid`);
 
+  let outputDataKey = (key.indexOf('$outputData') === -1) ? '$outputData.' + key : key;
   try {
-    let outputDataKey = (key.indexOf('$outputData') === -1) ? '$outputData.' + key : key;
     return evaluateValue(outputDataKey, {'$outputData': outputData});
   } catch (err) {
-    throw new TestError(`${JSON.stringify(key)} cannot be evaluated`);
+    throw new TestError(`expectedData.key ${JSON.stringify(key)} cannot be evaluated`);
   }
 }
 
@@ -142,14 +140,17 @@ function evaluateValue (obj, sourceData) {
   } else if (typeof obj === 'string') {
     if (obj.indexOf('$') === -1) return obj;
 
-    // Todo: check existing
+    let lstMatchedExport = obj.match(/\$\w*/gi);
+    lstMatchedExport.forEach(function (item) {
+      if (!sourceData.hasOwnProperty(item)) throw new TestError(`exportData ${JSON.stringify(item)} is undefined`);
+    });
 
     let sandbox = { source: sourceData };
     try {
       vm.runInNewContext('evaledExportValue = source.' + obj, sandbox);
       return sandbox.evaledExportValue;
     } catch (err) {
-      throw new TestError(`${JSON.stringify(obj)} cannot be evaluated`);
+      throw new TestError(`expectedData.value ${JSON.stringify(obj)} cannot be evaluated`);
     }
   }
   return obj;

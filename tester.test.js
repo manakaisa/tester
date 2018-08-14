@@ -59,62 +59,64 @@ tester.use([
   }
 ]);
 
-tester.test({
-  description: 'tester.test (assert)',
-  testcases: [
-    {
-      test: 'equal',
-      command: 'general',
-      inputData: { foo: 'bar' },
-      expectedData: { assert: 'equal', value: { foo: 'bar' } }
-    },
-    {
-      test: 'notEqual',
-      command: 'general',
-      inputData: { foo: 'bar' },
-      expectedData: { assert: 'notEqual', value: { foo: 'other' } }
-    },
-    {
-      test: 'greater',
-      command: 'general',
-      inputData: 0,
-      expectedData: { assert: 'greater', value: -1 }
-    },
-    {
-      test: 'less',
-      command: 'general',
-      inputData: 0,
-      expectedData: { assert: 'less', value: 1 }
-    },
-    {
-      test: 'typeof',
-      command: 'general',
-      inputData: { foo: 'bar' },
-      expectedData: { assert: 'typeof', value: 'object' }
-    },
-    {
-      description: 'error',
-      testcases: [
-        {
-          test: 'error (any)',
-          command: 'error1',
-          expectedData: { assert: 'error' }
-        },
-        {
-          test: 'error (match message)',
-          command: 'error2',
-          inputData: 'error foo',
-          expectedData: { assert: 'error', value: 'error foo' }
-        }
-      ]
-    },
-    {
-      test: 'ok',
-      command: 'general',
-      expectedData: { assert: 'ok' }
-    }
-  ]
-});
+tester.test([
+  {
+    description: 'tester.test (assert)',
+    testcases: [
+      {
+        test: 'equal',
+        command: 'general',
+        inputData: { foo: 'bar' },
+        expectedData: { assert: 'equal', value: { foo: 'bar' } }
+      },
+      {
+        test: 'notEqual',
+        command: 'general',
+        inputData: { foo: 'bar' },
+        expectedData: { assert: 'notEqual', value: { foo: 'other' } }
+      },
+      {
+        test: 'greater',
+        command: 'general',
+        inputData: 0,
+        expectedData: { assert: 'greater', value: -1 }
+      },
+      {
+        test: 'less',
+        command: 'general',
+        inputData: 0,
+        expectedData: { assert: 'less', value: 1 }
+      },
+      {
+        test: 'typeof',
+        command: 'general',
+        inputData: { foo: 'bar' },
+        expectedData: { assert: 'typeof', value: 'object' }
+      },
+      {
+        description: 'error',
+        testcases: [
+          {
+            test: 'error (any)',
+            command: 'error1',
+            expectedData: { assert: 'error' }
+          },
+          {
+            test: 'error (match message)',
+            command: 'error2',
+            inputData: 'error foo',
+            expectedData: { assert: 'error', value: 'error foo' }
+          }
+        ]
+      },
+      {
+        test: 'ok',
+        command: 'general',
+        expectedData: { assert: 'ok' }
+      }
+    ]
+  }
+]);
 
 tester.test([
   {
@@ -161,47 +163,61 @@ tester.test([
         command: 'general',
         inputData: 'bar',
         expectedData: { assert: 'equal', value: '$output.foo' }
+      },
+      {
+        test: 'advance exportData',
+        command: 'general',
+        inputData: ['$output', '$output.foo'],
+        expectedData: { assert: 'equal', value: ['$output', '$output.foo'] }
       }
     ]
   }
 ]);
 
-tester.test([
-  {
-    test: 'tester.skip',
-    command: 'general',
-    inputData: { foo: 'bar' },
-    expectedData: { assert: 'equal', value: { foo: 'bar' } },
-    skip: true
-  }
-]);
+tester.test({
+  test: 'tester.skip',
+  command: 'general',
+  inputData: { foo: 'bar' },
+  expectedData: { assert: 'equal', value: { foo: 'bar' } },
+  skip: true
+});
 
 tester.test([
   {
-    test: 'invalid expectedData',
-    command: 'general'
+    test: 'mock exportData',
+    command: 'general',
+    inputData: { foo: 'bar' },
+    expectedData: { assert: 'ok' },
+    exportData: 'output'
   },
   {
-    test: 'invalid expectedData.assert',
+    test: 'invalid expectedData.assert (error means ok)',
     command: 'general',
     expectedData: { assert: 'some_assert' }
   },
   {
-    test: 'invalid evaluation',
+    test: 'invalid exportData (error means ok)',
     command: 'general',
-    inputData: '$output some',
+    inputData: { foo: 'bar' },
+    expectedData: { assert: 'ok' },
+    exportData: '1output'
+  },
+  {
+    test: 'undefined exportData (error means ok)',
+    command: 'general',
+    inputData: '$output1',
     expectedData: { assert: 'ok' }
   },
   {
-    test: 'application error',
-    command: 'error1',
-    inputData: { foo: 'bar' },
-    expectedData: { assert: 'equal', value: { foo: 'bar' } }
+    test: 'invalid evaluation (error means ok)',
+    command: 'general',
+    inputData: '$output()',
+    expectedData: { assert: 'ok' }
   },
   {
-    test: 'error message',
-    command: 'general',
+    test: 'application error (error means ok)',
+    command: 'error1',
     inputData: { foo: 'bar' },
-    expectedData: { assert: 'equal', value: { foo: 'other' }, message: 'test error message' }
+    expectedData: { assert: 'equal', value: { foo: 'bar' }, message: 'some message' }
   }
 ]);
