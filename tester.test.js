@@ -8,11 +8,11 @@ describe('tester.get', function () {
 });
 
 describe('tester.set', function () {
-  it('set { key: foo, value: bar }', function () {
+  it('set { foo: bar }', function () {
     assert.doesNotThrow(() => tester.set('foo', 'bar'));
   });
 
-  it('get { key: foo }', function () {
+  it('get foo }', function () {
     assert.strictEqual(tester.get('foo'), 'bar');
   });
 });
@@ -146,26 +146,26 @@ tester.test([
     description: 'tester.test (exportData)',
     testcases: [
       {
-        test: 'exportData',
+        test: 'export',
         command: 'general',
         inputData: { foo: 'bar' },
         expectedData: { assert: 'ok' },
         exportData: 'output'
       },
       {
-        test: 'exportData to inputData',
+        test: 'export to inputData',
         command: 'general',
         inputData: '$output.foo',
         expectedData: { assert: 'equal', value: 'bar' }
       },
       {
-        test: 'exportData to expectedData.value',
+        test: 'export to expectedData.value',
         command: 'general',
         inputData: 'bar',
         expectedData: { assert: 'equal', value: '$output.foo' }
       },
       {
-        test: 'advance exportData',
+        test: 'export (advance)',
         command: 'general',
         inputData: ['$output', '$output.foo'],
         expectedData: { assert: 'equal', value: ['$output', '$output.foo'] }
@@ -184,40 +184,44 @@ tester.test({
 
 tester.test([
   {
-    test: 'mock exportData',
-    command: 'general',
-    inputData: { foo: 'bar' },
-    expectedData: { assert: 'ok' },
-    exportData: 'output'
-  },
-  {
-    test: 'invalid expectedData.assert (error means ok)',
-    command: 'general',
-    expectedData: { assert: 'some_assert' }
-  },
-  {
-    test: 'invalid exportData (error means ok)',
-    command: 'general',
-    inputData: { foo: 'bar' },
-    expectedData: { assert: 'ok' },
-    exportData: '1output'
-  },
-  {
-    test: 'undefined exportData (error means ok)',
-    command: 'general',
-    inputData: '$output1',
-    expectedData: { assert: 'ok' }
-  },
-  {
-    test: 'invalid evaluation (error means ok)',
-    command: 'general',
-    inputData: '$output()',
-    expectedData: { assert: 'ok' }
-  },
-  {
-    test: 'application error (error means ok)',
-    command: 'error1',
-    inputData: { foo: 'bar' },
-    expectedData: { assert: 'equal', value: { foo: 'bar' }, message: 'some message' }
+    description: 'error cases',
+    testcases: [
+      {
+        test: 'invalid expectedData.assert #error_ok',
+        command: 'general',
+        expectedData: { assert: 'some_assert' }
+      },
+      {
+        test: 'invalid exportData #error_ok',
+        command: 'general',
+        inputData: { foo: 'bar' },
+        expectedData: { assert: 'ok' },
+        exportData: '1output'
+      },
+      {
+        test: 'undefined exportData #error_ok',
+        command: 'general',
+        inputData: '$1output',
+        expectedData: { assert: 'ok' }
+      },
+      {
+        test: 'invalid evaluation #error_ok',
+        command: 'general',
+        inputData: '$output()',
+        expectedData: { assert: 'ok' }
+      },
+      {
+        test: 'application error #error_ok',
+        command: 'error1',
+        inputData: { foo: 'bar' },
+        expectedData: { assert: 'equal', value: { foo: 'bar' }, message: 'some message' }
+      }
+    ]
   }
 ]);
+
+afterEach(function () {
+  if (this.currentTest.title.indexOf('#error_ok') > -1 && this.currentTest.state === 'passed') {
+    console.error(new Error('**Passed is not ok'));
+  }
+});
