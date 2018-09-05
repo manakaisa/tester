@@ -18,9 +18,8 @@ describe('tester.set', function () {
 });
 
 let beforeCalled = false;
-tester.beforeTest((done) => {
+tester.beforeTest(async () => {
   beforeCalled = true;
-  done();
 });
 before(function () {
   assert.ok(beforeCalled);
@@ -28,9 +27,8 @@ before(function () {
 });
 
 let afterCalled = false;
-tester.afterTest((done) => {
+tester.afterTest(async () => {
   afterCalled = true;
-  done();
 });
 after(function () {
   assert.ok(afterCalled);
@@ -39,21 +37,21 @@ after(function () {
 
 tester.use({
   name: 'general',
-  command: function (inputData, done) {
-    done(null, inputData);
+  command: async (inputData) => {
+    return inputData;
   }
 });
 
 tester.use([
   {
     name: 'error1',
-    command: function (inputData, done) {
-      done(new Error(inputData));
+    command: async (inputData) => {
+      throw new Error(inputData);
     }
   },
   {
     name: 'error2',
-    command: function (inputData, done) {
+    command: async (inputData) => {
       throw new Error(inputData);
     }
   }

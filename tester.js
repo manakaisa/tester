@@ -13,30 +13,30 @@ class TestError extends Error {
 }
 
 var tester = {
-  get: function (value) {
+  get: (value) => {
     return process.env[value] || mapGlobalVars.get(value);
   },
 
-  set: function (key, value) {
+  set: (key, value) => {
     mapGlobalVars.set(key, value);
   },
 
-  use: function (commands) {
+  use: (commands) => {
     let lstCommands = Array.isArray(commands) ? commands : [commands];
     lstCommands.forEach(command => { mapCommands.set(command.name, command); });
   },
 
-  beforeTest: function (fn) {
-    before(done => { fn(done); });
+  beforeTest: (fn) => {
+    before(fn);
   },
 
-  afterTest: function (fn) {
-    after(done => { fn(done); });
+  afterTest: (fn) => {
+    after(fn);
   },
 
-  test: function (testcases) {
+  test: (testcases) => {
     let lstTestcases = Array.isArray(testcases) ? testcases : [testcases];
-    lstTestcases.forEach(function (testcase) {
+    lstTestcases.forEach((testcase) => {
       if (testcase.description) {
         generateDescription(testcase);
       } else {
@@ -47,8 +47,8 @@ var tester = {
 };
 
 function generateDescription (testGroup) {
-  describe(testGroup.description, function () {
-    testGroup.testcases.forEach(function (testcase) {
+  describe(testGroup.description, () => {
+    testGroup.testcases.forEach((testcase) => {
       if (testcase.description) {
         generateDescription(testcase);
       } else {
@@ -64,12 +64,11 @@ function generateTest (testcase) {
     return;
   }
 
-  it(testcase.test, function (done) {
+  it(testcase.test, async () => {
     let command = mapCommands.get(testcase.command).command;
-    try {
-      command(evaluateValue(testcase.inputData, objExportData), function (err, outputData) {
-        if (err) throw err;
 
+    await command(evaluateValue(testcase.inputData, objExportData))
+      .then((outputData) => {
         generateAssert(testcase, outputData);
 
         if (testcase.exportData) {
@@ -77,21 +76,18 @@ function generateTest (testcase) {
 
           objExportData['$' + testcase.exportData] = outputData;
         }
+      })
+      .catch((err) => {
+        if (err instanceof assert.AssertionError || err instanceof TestError) throw err;
 
-        done();
+        generateAssert(testcase, err);
       });
-    } catch (err) {
-      if (err instanceof assert.AssertionError || err instanceof TestError) throw err;
-
-      generateAssert(testcase, err);
-      done();
-    }
   });
 }
 
 function generateAssert (testcase, outputData) {
   let lstExpectedData = Array.isArray(testcase.expectedData) ? testcase.expectedData : [testcase.expectedData];
-  lstExpectedData.forEach(function (expectedData) {
+  lstExpectedData.forEach((expectedData) => {
     if (expectedData.assert === 'equal') {
       assert.deepStrictEqual(evaluateOutputData(expectedData.key, outputData), evaluateValue(expectedData.value, objExportData), expectedData.message);
     } else if (expectedData.assert === 'notEqual') {
@@ -141,7 +137,7 @@ function evaluateValue (obj, sourceData) {
     if (obj.indexOf('$') === -1) return obj;
 
     let lstMatchedExport = obj.match(/\$\w*/gi);
-    lstMatchedExport.forEach(function (item) {
+    lstMatchedExport.forEach((item) => {
       if (!sourceData.hasOwnProperty(item)) throw new TestError(`exportData ${JSON.stringify(item)} is undefined`);
     });
 

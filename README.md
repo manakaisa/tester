@@ -1,7 +1,7 @@
 # tester
 A codeless unit test
 
-## Assert Support
+## Assertion Support
 - equal (use Assert.deepStrictEqual)
 - notEqual (use Assert.notDeepStrictEqual)
 - greater
@@ -11,35 +11,35 @@ A codeless unit test
 - error
 
 ## API
-- get(key)
+- get(key) => value
 - set(key, value)
-- use([command])
+- use(<Array<command\>>)
   ```
   command:
   {
-    name: "<name>",
-    command: Function (inputData, done)
+    name: "command name",
+    command: <Function(inputData) => Promise>
   }
   ```
-- beforeTest(Function)
-- afterTest(Function)
-- test([testcase])
+- beforeTest(<Function => Promise>)
+- afterTest(<Function => Promise>)
+- test(<Array<testcase\>>)
   ```
   testcase:
   {
-    description: "<description>",
+    description: "test description",
     tests: [
       {
-        test: "<name>",
-        command: "<command name>",
-        inputData: {}, // or any standard objects, or $exportData
+        test: "test name",
+        command: "value of command name",
+        inputData: <any|$exportData>,
         expectedData: [{
-          assert: "<value of Assert>",
-          key: "", // (optional), refer to <output>.key
-          value: {}, // or any standard objects, or $exportData
-          message: "" // (optional)
+          assert: "value of supported assertion",
+          key: "(optional), specify <output>.key to perform test",
+          value: <any|$exportData>,
+          message: "(optional), show message when testing fail"
         }],
-        exportData: "", // (optional), valid name: /^[A-Za-z_]\w*$/
+        exportData: "(optional), define variable for exporting <output>, valid name: /^[A-Za-z_]\w*$/",
         skip: false
       }
     ]
