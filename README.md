@@ -45,3 +45,29 @@ A codeless unit test
     ]
   }
   ```
+
+## Plug-ins
+### tester-plugin-webserver
+A web server plug-in
+#### API
+- constructor([options])
+  ```
+  options:
+  {
+    port: 0
+  }
+  ```
+- start() => Promise
+- close() => Promise
+- url => <string\>
+- use(<Function(req, res, next)>)
+- static(path, folder)
+- staticFile(path, file)
+- get(path, <Function(req, res)>)
+- post(path, <Function(req, res)>)
+- put(path, <Function(req, res)>)
+- patch(path, <Function(req, res)>)
+- delete(path, <Function(req, res)>)
+
+## Notes
+- Not support throwing non-error

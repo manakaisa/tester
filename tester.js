@@ -47,7 +47,7 @@ var tester = {
 };
 
 function generateDescription (testGroup) {
-  describe(testGroup.description, () => {
+  describe(testGroup.description, function () {
     testGroup.testcases.forEach((testcase) => {
       if (testcase.description) {
         generateDescription(testcase);
@@ -64,7 +64,7 @@ function generateTest (testcase) {
     return;
   }
 
-  it(testcase.test, async () => {
+  it(testcase.test, async function () {
     let command = mapCommands.get(testcase.command).command;
 
     await command(evaluateValue(testcase.inputData, objExportData))
@@ -85,7 +85,7 @@ function generateTest (testcase) {
   });
 }
 
-function generateAssert (testcase, outputData) {
+function generateAssert (testcase, outputData, error) {
   let lstExpectedData = Array.isArray(testcase.expectedData) ? testcase.expectedData : [testcase.expectedData];
   lstExpectedData.forEach((expectedData) => {
     if (expectedData.assert === 'equal') {
@@ -99,7 +99,11 @@ function generateAssert (testcase, outputData) {
     } else if (expectedData.assert === 'typeof') {
       assert.strictEqual(typeof evaluateOutputData(expectedData.key, outputData), evaluateValue(expectedData.value, objExportData), expectedData.message);
     } else if (expectedData.assert === 'ok') {
-      assert.ok(true);
+      if (outputData instanceof Error) {
+        assert.fail(expectedData.message || 'Error');
+      } else {
+        assert.ok(true);
+      }
     } else if (expectedData.assert === 'error') {
       assert.ok(outputData instanceof Error, expectedData.message);
       if (!expectedData.key) {

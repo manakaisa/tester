@@ -44,13 +44,7 @@ tester.use({
 
 tester.use([
   {
-    name: 'error1',
-    command: async (inputData) => {
-      throw new Error(inputData);
-    }
-  },
-  {
-    name: 'error2',
+    name: 'error',
     command: async (inputData) => {
       throw new Error(inputData);
     }
@@ -96,12 +90,12 @@ tester.test([
         testcases: [
           {
             test: 'error (any)',
-            command: 'error1',
+            command: 'error',
             expectedData: { assert: 'error' }
           },
           {
             test: 'error (match message)',
-            command: 'error2',
+            command: 'error',
             inputData: 'error foo',
             expectedData: { assert: 'error', value: 'error foo' }
           }
@@ -209,8 +203,13 @@ tester.test([
         expectedData: { assert: 'ok' }
       },
       {
+        test: 'error on assert.ok #error_ok',
+        command: 'error',
+        expectedData: { assert: 'ok' }
+      },
+      {
         test: 'application error #error_ok',
-        command: 'error1',
+        command: 'error',
         inputData: { foo: 'bar' },
         expectedData: { assert: 'equal', value: { foo: 'bar' }, message: 'some message' }
       }
