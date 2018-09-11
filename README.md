@@ -4,6 +4,8 @@ A codeless unit test
 ## Assertion Support
 - equal (use Assert.deepStrictEqual)
 - notEqual (use Assert.notDeepStrictEqual)
+- undefined
+- notUndefined
 - greater
 - less
 - typeof
@@ -45,6 +47,8 @@ A codeless unit test
     ]
   }
   ```
+## Limitation
+- Not support throwing non-error
 
 ## Plug-ins
 ### tester-plugin-webserver
@@ -58,7 +62,7 @@ A web server plug-in
   }
   ```
 - start() => Promise
-- close() => Promise
+- stop() => Promise
 - url => <string\>
 - use(<Function(req, res, next)>)
 - static(path, folder)
@@ -68,6 +72,5 @@ A web server plug-in
 - put(path, <Function(req, res)>)
 - patch(path, <Function(req, res)>)
 - delete(path, <Function(req, res)>)
-
-## Notes
-- Not support throwing non-error
+#### Limitation
+- Not support HTTPS

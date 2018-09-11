@@ -85,13 +85,17 @@ function generateTest (testcase) {
   });
 }
 
-function generateAssert (testcase, outputData, error) {
+function generateAssert (testcase, outputData) {
   let lstExpectedData = Array.isArray(testcase.expectedData) ? testcase.expectedData : [testcase.expectedData];
   lstExpectedData.forEach((expectedData) => {
     if (expectedData.assert === 'equal') {
       assert.deepStrictEqual(evaluateOutputData(expectedData.key, outputData), evaluateValue(expectedData.value, objExportData), expectedData.message);
     } else if (expectedData.assert === 'notEqual') {
       assert.notDeepStrictEqual(evaluateOutputData(expectedData.key, outputData), evaluateValue(expectedData.value, objExportData), expectedData.message);
+    } else if (expectedData.assert === 'undefined') {
+      assert.deepStrictEqual(evaluateOutputData(expectedData.key, outputData), undefined, expectedData.message);
+    } else if (expectedData.assert === 'notUndefined') {
+      assert.notDeepStrictEqual(evaluateOutputData(expectedData.key, outputData), undefined, expectedData.message);
     } else if (expectedData.assert === 'greater') {
       assert.ok(evaluateOutputData(expectedData.key, outputData) > evaluateValue(expectedData.value, objExportData), expectedData.message);
     } else if (expectedData.assert === 'less') {

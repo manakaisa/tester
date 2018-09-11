@@ -4,46 +4,21 @@ const tester = require('../tester.js');
 const WebServer = require('./tester-plugin-webserver.js');
 
 var webserver = new WebServer({ port: 3000 });
+var verifiedUse = false;
+var verifiedGet = false;
+var verifiedPost = false;
+var verifiedPut = false;
+var verifiedPatch = false;
+var verifiedDelete = false;
+var defaultRoot = true;
 
 tester.use([
   {
-    name: 'start',
-    command: async (inputData) => {
-      await webserver.start();
-    }
-  },
-  {
-    name: 'stop',
-    command: async (inputData) => {
-      await webserver.stop();
-    }
-  },
-  {
-    name: 'url',
-    command: async () => {
-      return webserver.url;
-    }
-  },
-  {
     name: 'use',
     command: async () => {
-      let isCalled = false;
-
       webserver.use((req, res, next) => {
-        isCalled = true;
+        verifiedUse = true;
         next();
-      });
-
-      await new Promise((resolve, reject) => {
-        http.get(webserver.url)
-          .on('response', (res) => {
-            if (!isCalled) return reject(new Error());
-
-            resolve();
-          })
-          .on('error', (err) => {
-            reject(err);
-          });
       });
     }
   },
@@ -60,12 +35,101 @@ tester.use([
     }
   },
   {
-    name: 'verifyStatic',
+    name: 'get',
+    command: async (inputData) => {
+      webserver.get(inputData.path, (req, res) => {
+        verifiedGet = true;
+        res.send();
+      });
+    }
+  },
+  {
+    name: 'post',
+    command: async (inputData) => {
+      webserver.post(inputData.path, (req, res) => {
+        verifiedPost = true;
+        res.send();
+      });
+    }
+  },
+  {
+    name: 'put',
+    command: async (inputData) => {
+      webserver.put(inputData.path, (req, res) => {
+        verifiedPut = true;
+        res.send();
+      });
+    }
+  },
+  {
+    name: 'patch',
+    command: async (inputData) => {
+      webserver.patch(inputData.path, (req, res) => {
+        verifiedPatch = true;
+        res.send();
+      });
+    }
+  },
+  {
+    name: 'delete',
+    command: async (inputData) => {
+      webserver.delete(inputData.path, (req, res) => {
+        verifiedDelete = true;
+        res.send();
+      });
+    }
+  },
+  {
+    name: 'root',
+    command: async () => {
+      webserver.get('/', (req, res, next) => {
+        if (defaultRoot) return next();
+
+        res.send('<my-root>');
+      });
+    }
+  },
+  {
+    name: 'start',
+    command: async () => {
+      return webserver.start();
+    }
+  },
+  {
+    name: 'stop',
+    command: async () => {
+      return webserver.stop();
+    }
+  },
+  {
+    name: 'url',
+    command: async () => {
+      return webserver.url;
+    }
+  },
+  {
+    name: 'verifyUse',
+    command: async () => {
+      await new Promise((resolve, reject) => {
+        http.get(webserver.url)
+          .on('response', (res) => {
+            if (!verifiedUse) throw new Error();
+
+            resolve();
+          })
+          .on('error', (err) => {
+            reject(err);
+          });
+      });
+    }
+  },
+  {
+    name: 'verifyResponse',
     command: async (inputData) => {
       return new Promise((resolve, reject) => {
         http.get(webserver.url + inputData.path)
           .on('response', (res) => {
-            if (res.statusCode !== 200) return reject(new Error());
+            if (res.statusCode !== 200) throw new Error();
 
             res.setEncoding('utf8');
             res.on('readable', () => {
@@ -79,19 +143,12 @@ tester.use([
     }
   },
   {
-    name: 'get',
+    name: 'verifyGet',
     command: async (inputData) => {
-      let isCalled = false;
-
-      webserver.get(inputData.path, (req, res) => {
-        isCalled = true;
-        res.send();
-      });
-
-      return new Promise((resolve, reject) => {
+      await new Promise((resolve, reject) => {
         http.get(webserver.url + inputData.path)
           .on('response', (res) => {
-            if (!isCalled) return reject(new Error());
+            if (!verifiedGet) throw new Error();
 
             resolve();
           })
@@ -102,26 +159,18 @@ tester.use([
     }
   },
   {
-    name: 'post',
+    name: 'verifyPost',
     command: async (inputData) => {
-      let isCalled = false;
-
-      webserver.post(inputData.path, (req, res) => {
-        isCalled = true;
-        res.send();
-      });
-
-      return new Promise((resolve, reject) => {
+      await new Promise((resolve, reject) => {
         let url = new URL(webserver.url);
         http.request({
           hostname: url.hostname,
           port: url.port,
           path: inputData.path,
-          method: 'POST',
-          timeout: 1000
+          method: 'POST'
         })
           .on('response', (res) => {
-            if (!isCalled) return reject(new Error());
+            if (!verifiedPost) throw new Error();
 
             resolve();
           })
@@ -133,26 +182,18 @@ tester.use([
     }
   },
   {
-    name: 'put',
+    name: 'verifyPut',
     command: async (inputData) => {
-      let isCalled = false;
-
-      webserver.put(inputData.path, (req, res) => {
-        isCalled = true;
-        res.send();
-      });
-
-      return new Promise((resolve, reject) => {
+      await new Promise((resolve, reject) => {
         let url = new URL(webserver.url);
         http.request({
           hostname: url.hostname,
           port: url.port,
           path: inputData.path,
-          method: 'PUT',
-          timeout: 1000
+          method: 'PUT'
         })
           .on('response', (res) => {
-            if (!isCalled) return reject(new Error());
+            if (!verifiedPut) throw new Error();
 
             resolve();
           })
@@ -164,26 +205,18 @@ tester.use([
     }
   },
   {
-    name: 'patch',
+    name: 'verifyPatch',
     command: async (inputData) => {
-      let isCalled = false;
-
-      webserver.patch(inputData.path, (req, res) => {
-        isCalled = true;
-        res.send();
-      });
-
-      return new Promise((resolve, reject) => {
+      await new Promise((resolve, reject) => {
         let url = new URL(webserver.url);
         http.request({
           hostname: url.hostname,
           port: url.port,
           path: inputData.path,
-          method: 'PATCH',
-          timeout: 1000
+          method: 'PATCH'
         })
           .on('response', (res) => {
-            if (!isCalled) return reject(new Error());
+            if (!verifiedPatch) throw new Error();
 
             resolve();
           })
@@ -195,26 +228,18 @@ tester.use([
     }
   },
   {
-    name: 'delete',
+    name: 'verifyDelete',
     command: async (inputData) => {
-      let isCalled = false;
-
-      webserver.delete(inputData.path, (req, res) => {
-        isCalled = true;
-        res.send();
-      });
-
-      return new Promise((resolve, reject) => {
+      await new Promise((resolve, reject) => {
         let url = new URL(webserver.url);
         http.request({
           hostname: url.hostname,
           port: url.port,
           path: inputData.path,
-          method: 'DELETE',
-          timeout: 1000
+          method: 'DELETE'
         })
           .on('response', (res) => {
-            if (!isCalled) return reject(new Error());
+            if (!verifiedDelete) throw new Error();
 
             resolve();
           })
@@ -226,28 +251,29 @@ tester.use([
     }
   },
   {
-    name: 'parm',
+    name: 'verifyRoot',
     command: async (inputData) => {
-      let isCalled = false;
-
-      webserver.get(inputData.parm, (req, res) => {
-        isCalled = true;
-        res.send();
-      });
+      if (inputData.default) {
+        defaultRoot = true;
+      } else {
+        defaultRoot = false;
+      }
 
       return new Promise((resolve, reject) => {
         let url = new URL(webserver.url);
         http.request({
           hostname: url.hostname,
           port: url.port,
-          path: inputData.path,
-          method: 'GET',
-          timeout: 1000
+          path: '/',
+          method: 'GET'
         })
           .on('response', (res) => {
-            if (!isCalled) return reject(new Error());
+            if (res.statusCode !== 200) throw new Error();
 
-            resolve();
+            res.setEncoding('utf8');
+            res.on('readable', () => {
+              resolve(res.read());
+            });
           })
           .on('error', (err) => {
             reject(err);
@@ -258,70 +284,30 @@ tester.use([
   }
 ]);
 
-tester.test({
-  description: 'webserver-start',
-  testcases: [
-    {
-      test: 'start',
-      command: 'start',
-      inputData: {
-        port: 3000
-      },
-      expectedData: { assert: 'ok' }
-    }
-  ]
-});
-
 tester.test([
   {
-    description: 'webserver-methods',
+    description: 'prepare',
     testcases: [
-      {
-        test: 'url',
-        command: 'url',
-        expectedData: { assert: 'equal', value: 'http://127.0.0.1:3000' }
-      },
       {
         test: 'use',
         command: 'use',
         expectedData: { assert: 'ok' }
       },
       {
-        description: 'static',
-        testcases: [
-          {
-            test: 'static folder',
-            command: 'static',
-            inputData: {
-              path: './'
-            },
-            expectedData: { assert: 'ok' }
-          },
-          {
-            test: 'verify static folder',
-            command: 'verifyStatic',
-            inputData: {
-              path: '/tester-plugin-webserver.js'
-            },
-            expectedData: { assert: 'greater', key: '$outputData.length', value: 0 }
-          },
-          {
-            test: 'static file',
-            command: 'staticFile',
-            inputData: {
-              path: '../package.json'
-            },
-            expectedData: { assert: 'ok' }
-          },
-          {
-            test: 'verify static folder',
-            command: 'verifyStatic',
-            inputData: {
-              path: '/tester-plugin-webserver.js'
-            },
-            expectedData: { assert: 'greater', key: '$outputData.length', value: 0 }
-          }
-        ]
+        test: 'static folder',
+        command: 'static',
+        inputData: {
+          path: './'
+        },
+        expectedData: { assert: 'ok' }
+      },
+      {
+        test: 'static file',
+        command: 'staticFile',
+        inputData: {
+          path: '../package.json'
+        },
+        expectedData: { assert: 'ok' }
       },
       {
         test: 'get',
@@ -364,25 +350,109 @@ tester.test([
         expectedData: { assert: 'ok' }
       },
       {
-        test: 'get (parm)',
-        command: 'parm',
-        inputData: {
-          parm: '/parm1/:parm1/parm2/:parm2',
-          path: '/parm1/1/parm2/2'
-        },
+        test: 'root',
+        command: 'root',
         expectedData: { assert: 'ok' }
       }
     ]
   }
 ]);
-
-tester.test({
-  description: 'webserver-stop',
-  testcases: [
-    {
-      test: 'stop',
-      command: 'stop',
-      expectedData: { assert: 'ok' }
-    }
-  ]
-});
+tester.test([
+  {
+    description: 'webserver',
+    testcases: [
+      {
+        test: 'start',
+        command: 'start',
+        expectedData: { assert: 'ok' }
+      },
+      {
+        test: 'url',
+        command: 'url',
+        expectedData: { assert: 'equal', value: 'http://127.0.0.1:3000' }
+      },
+      {
+        test: 'verify use',
+        command: 'verifyUse',
+        expectedData: { assert: 'ok' }
+      },
+      {
+        test: 'verify static folder',
+        command: 'verifyResponse',
+        inputData: {
+          path: '/tester-plugin-webserver.js'
+        },
+        expectedData: { assert: 'greater', key: '$outputData.length', value: 0 }
+      },
+      {
+        test: 'verify static file',
+        command: 'verifyResponse',
+        inputData: {
+          path: '/package.json'
+        },
+        expectedData: { assert: 'greater', key: '$outputData.length', value: 0 }
+      },
+      {
+        test: 'verify get',
+        command: 'verifyGet',
+        inputData: {
+          path: '/get'
+        },
+        expectedData: { assert: 'ok' }
+      },
+      {
+        test: 'verify post',
+        command: 'verifyPost',
+        inputData: {
+          path: '/post'
+        },
+        expectedData: { assert: 'ok' }
+      },
+      {
+        test: 'verify put',
+        command: 'verifyPut',
+        inputData: {
+          path: '/put'
+        },
+        expectedData: { assert: 'ok' }
+      },
+      {
+        test: 'verify patch',
+        command: 'verifyPatch',
+        inputData: {
+          path: '/patch'
+        },
+        expectedData: { assert: 'ok' }
+      },
+      {
+        test: 'verify delete',
+        command: 'verifyDelete',
+        inputData: {
+          path: '/delete'
+        },
+        expectedData: { assert: 'ok' }
+      },
+      {
+        test: 'verify (default) root',
+        command: 'verifyRoot',
+        inputData: {
+          default: true
+        },
+        expectedData: { assert: 'equal', value: '<html><head></head><body></body></html>' }
+      },
+      {
+        test: 'verify root',
+        command: 'verifyRoot',
+        inputData: {
+          default: false
+        },
+        expectedData: { assert: 'equal', value: '<my-root>' }
+      },
+      {
+        test: 'stop',
+        command: 'stop',
+        expectedData: { assert: 'ok' }
+      }
+    ]
+  }
+]);

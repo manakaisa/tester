@@ -68,6 +68,17 @@ tester.test([
         expectedData: { assert: 'notEqual', value: { foo: 'other' } }
       },
       {
+        test: 'undefined',
+        command: 'general',
+        expectedData: { assert: 'undefined' }
+      },
+      {
+        test: 'notUndefined',
+        command: 'general',
+        inputData: { foo: 'bar' },
+        expectedData: { assert: 'notUndefined' }
+      },
+      {
         test: 'greater',
         command: 'general',
         inputData: 0,

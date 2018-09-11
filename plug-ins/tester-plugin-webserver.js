@@ -4,9 +4,9 @@ const express = require('express');
 
 class WebServer {
   constructor (options = {}) {
+    this._protocol = 'http';
     this._host = 'localhost';
     this._port = options.port || 0;
-    this._protocol = 'http';
     this._app = express();
     this._server = http.createServer(this._app);
   }
@@ -16,7 +16,11 @@ class WebServer {
     return `${this._protocol}://${addressInfo.address}:${addressInfo.port}`;
   }
 
-  start () {
+  async start () {
+    this._app.get('/', (req, res) => {
+      res.send(`<html><head></head><body></body></html>`);
+    });
+
     return new Promise((resolve, reject) => {
       this._server
         .on('listening', () => {
@@ -29,7 +33,7 @@ class WebServer {
     });
   }
 
-  stop () {
+  async stop () {
     return new Promise((resolve, reject) => {
       this._server
         .on('close', () => {
@@ -51,7 +55,7 @@ class WebServer {
   }
 
   staticFile (filePath) {
-    this._app.use(`/${path.basename(filePath)}`, (req, res, next) => {
+    this._app.use('/' + path.basename(filePath), (req, res, next) => {
       res.sendFile(path.join(__dirname, filePath));
     });
   }
