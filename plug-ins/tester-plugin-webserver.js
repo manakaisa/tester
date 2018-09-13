@@ -50,34 +50,47 @@ class WebServer {
     this._app.use(fn);
   }
 
-  static (folderPath) {
-    this._app.use(express.static(path.join(__dirname, folderPath)));
+  static (urlPath, folder) {
+    if (folder === undefined) {
+      folder = urlPath;
+      urlPath = '/';
+    }
+    if (urlPath === null) urlPath = '/';
+
+    this._app.use(urlPath, express.static(path.join(__dirname, folder)));
   }
 
-  staticFile (filePath) {
-    this._app.use('/' + path.basename(filePath), (req, res, next) => {
-      res.sendFile(path.join(__dirname, filePath));
+  staticFile (urlPath, file) {
+    if (file === undefined) {
+      file = urlPath;
+      urlPath = '';
+    }
+    if (urlPath === null) urlPath = '';
+    if (urlPath === '/') urlPath = '';
+
+    this._app.use(`${urlPath}/${path.basename(file)}`, (req, res, next) => {
+      res.sendFile(path.join(__dirname, file));
     });
   }
 
-  get (path, fn) {
-    this._app.get(path, fn);
+  get (urlPath, fn) {
+    this._app.get(urlPath, fn);
   }
 
-  post (path, fn) {
-    this._app.post(path, fn);
+  post (urlPath, fn) {
+    this._app.post(urlPath, fn);
   }
 
-  put (path, fn) {
-    this._app.put(path, fn);
+  put (urlPath, fn) {
+    this._app.put(urlPath, fn);
   }
 
-  patch (path, fn) {
-    this._app.patch(path, fn);
+  patch (urlPath, fn) {
+    this._app.patch(urlPath, fn);
   }
 
-  delete (path, fn) {
-    this._app.delete(path, fn);
+  delete (urlPath, fn) {
+    this._app.delete(urlPath, fn);
   }
 }
 

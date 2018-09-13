@@ -23,15 +23,27 @@ tester.use([
     }
   },
   {
-    name: 'static',
+    name: 'staticFolder',
     command: async (inputData) => {
-      webserver.static(inputData.path);
+      webserver.static(inputData.path, inputData.folder);
+    }
+  },
+  {
+    name: 'staticFolderDefaultRoot',
+    command: async (inputData) => {
+      webserver.static(inputData.folder);
     }
   },
   {
     name: 'staticFile',
     command: async (inputData) => {
-      webserver.staticFile(inputData.path);
+      webserver.staticFile(inputData.path, inputData.file);
+    }
+  },
+  {
+    name: 'staticFileDefaultRoot',
+    command: async (inputData) => {
+      webserver.staticFile(inputData.file);
     }
   },
   {
@@ -129,7 +141,7 @@ tester.use([
       return new Promise((resolve, reject) => {
         http.get(webserver.url + inputData.path)
           .on('response', (res) => {
-            if (res.statusCode !== 200) throw new Error();
+            if (res.statusCode !== 200) throw new Error(res.statusCode);
 
             res.setEncoding('utf8');
             res.on('readable', () => {
@@ -268,8 +280,8 @@ tester.use([
           method: 'GET'
         })
           .on('response', (res) => {
-            if (res.statusCode !== 200) throw new Error();
-
+            if (res.statusCode !== 200) throw new Error(res.statusCode);
+            
             res.setEncoding('utf8');
             res.on('readable', () => {
               resolve(res.read());
@@ -295,9 +307,18 @@ tester.test([
       },
       {
         test: 'static folder',
-        command: 'static',
+        command: 'staticFolder',
         inputData: {
-          path: './'
+          path: '/public',
+          folder: './'
+        },
+        expectedData: { assert: 'ok' }
+      },
+      {
+        test: 'static folder (default root)',
+        command: 'staticFolderDefaultRoot',
+        inputData: {
+          folder: './'
         },
         expectedData: { assert: 'ok' }
       },
@@ -305,7 +326,16 @@ tester.test([
         test: 'static file',
         command: 'staticFile',
         inputData: {
-          path: '../package.json'
+          path: '/public',
+          file: '../package.json'
+        },
+        expectedData: { assert: 'ok' }
+      },
+      {
+        test: 'static file (default root)',
+        command: 'staticFileDefaultRoot',
+        inputData: {
+          file: '../package.json'
         },
         expectedData: { assert: 'ok' }
       },
@@ -380,6 +410,14 @@ tester.test([
         test: 'verify static folder',
         command: 'verifyResponse',
         inputData: {
+          path: '/public/tester-plugin-webserver.js'
+        },
+        expectedData: { assert: 'greater', key: '$outputData.length', value: 0 }
+      },
+      {
+        test: 'verify static folder (default root)',
+        command: 'verifyResponse',
+        inputData: {
           path: '/tester-plugin-webserver.js'
         },
         expectedData: { assert: 'greater', key: '$outputData.length', value: 0 }
@@ -389,6 +427,14 @@ tester.test([
         command: 'verifyResponse',
         inputData: {
           path: '/package.json'
+        },
+        expectedData: { assert: 'greater', key: '$outputData.length', value: 0 }
+      },
+      {
+        test: 'verify static file (default root)',
+        command: 'verifyResponse',
+        inputData: {
+          path: '/public/package.json'
         },
         expectedData: { assert: 'greater', key: '$outputData.length', value: 0 }
       },

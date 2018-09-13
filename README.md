@@ -50,6 +50,7 @@ A codeless unit test
 ## Limitation
 - Not support throwing non-error
 
+
 ## Plug-ins
 ### tester-plugin-webserver
 A web server plug-in
@@ -65,8 +66,8 @@ A web server plug-in
 - stop() => Promise
 - url => <string\>
 - use(<Function(req, res, next)>)
-- static(path, folder)
-- staticFile(path, file)
+- static([path,] folder)
+- staticFile([path,] file)
 - get(path, <Function(req, res)>)
 - post(path, <Function(req, res)>)
 - put(path, <Function(req, res)>)
