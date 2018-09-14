@@ -4,7 +4,8 @@
   "description": "",
   "scripts": {
     "test": "mocha tester.test.js",
-    "test-plugin-webserver": "mocha plug-ins/tester-plugin-webserver.test.js"
+    "test-plugin-webserver": "mocha plug-ins/tester-plugin-webserver.test.js",
+    "test-plugin-browser": "mocha plug-ins/tester-plugin-browser.test.js"
   },
   "devDependencies": {
     "eslint": "^5.2.0",
@@ -16,6 +17,7 @@
   },
   "dependencies": {
     "mocha": "^5.2.0",
-    "express": "^4.16.3"
+    "express": "^4.16.3",
+    "puppeteer": "^1.8.0"
   }
 }

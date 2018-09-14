@@ -9,6 +9,14 @@ class WebServer {
     this._port = options.port || 0;
     this._app = express();
     this._server = http.createServer(this._app);
+
+    if (options.cors === true) {
+      this._app.use((req, res, next) => {
+        res.header('access-control-allow-origin', '*');
+        res.header('access-control-allow-headers', 'Origin, X-Requested-With, Content-Type, Accept');
+        next();
+      });
+    }
   }
 
   get url () {

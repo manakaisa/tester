@@ -3,14 +3,14 @@ const { URL } = require('url');
 const tester = require('../tester.js');
 const WebServer = require('./tester-plugin-webserver.js');
 
-var webserver = new WebServer({ port: 3000 });
+var webserver = new WebServer({ port: 3000, cors: true });
 var verifiedUse = false;
 var verifiedGet = false;
 var verifiedPost = false;
 var verifiedPut = false;
 var verifiedPatch = false;
 var verifiedDelete = false;
-var defaultRoot = true;
+var defaultIndex = true;
 
 tester.use([
   {
@@ -92,12 +92,12 @@ tester.use([
     }
   },
   {
-    name: 'root',
+    name: 'index',
     command: async () => {
       webserver.get('/', (req, res, next) => {
-        if (defaultRoot) return next();
+        if (defaultIndex) return next();
 
-        res.send('<my-root>');
+        res.send('<index>');
       });
     }
   },
@@ -263,12 +263,12 @@ tester.use([
     }
   },
   {
-    name: 'verifyRoot',
+    name: 'verifyIndex',
     command: async (inputData) => {
       if (inputData.default) {
-        defaultRoot = true;
+        defaultIndex = true;
       } else {
-        defaultRoot = false;
+        defaultIndex = false;
       }
 
       return new Promise((resolve, reject) => {
@@ -281,7 +281,7 @@ tester.use([
         })
           .on('response', (res) => {
             if (res.statusCode !== 200) throw new Error(res.statusCode);
-            
+
             res.setEncoding('utf8');
             res.on('readable', () => {
               resolve(res.read());
@@ -291,6 +291,22 @@ tester.use([
             reject(err);
           })
           .end();
+      });
+    }
+  },
+  {
+    name: 'verifyHeader',
+    command: async () => {
+      return new Promise((resolve, reject) => {
+        http.get(webserver.url)
+          .on('response', (res) => {
+            if (res.statusCode !== 200) throw new Error(res.statusCode);
+            
+            resolve(res.headers);
+          })
+          .on('error', (err) => {
+            reject(err);
+          });
       });
     }
   }
@@ -380,8 +396,8 @@ tester.test([
         expectedData: { assert: 'ok' }
       },
       {
-        test: 'root',
-        command: 'root',
+        test: 'index',
+        command: 'index',
         expectedData: { assert: 'ok' }
       }
     ]
@@ -412,7 +428,7 @@ tester.test([
         inputData: {
           path: '/public/tester-plugin-webserver.js'
         },
-        expectedData: { assert: 'greater', key: '$outputData.length', value: 0 }
+        expectedData: { assert: 'greater', key: 'length', value: 0 }
       },
       {
         test: 'verify static folder (default root)',
@@ -420,7 +436,7 @@ tester.test([
         inputData: {
           path: '/tester-plugin-webserver.js'
         },
-        expectedData: { assert: 'greater', key: '$outputData.length', value: 0 }
+        expectedData: { assert: 'greater', key: 'length', value: 0 }
       },
       {
         test: 'verify static file',
@@ -428,7 +444,7 @@ tester.test([
         inputData: {
           path: '/package.json'
         },
-        expectedData: { assert: 'greater', key: '$outputData.length', value: 0 }
+        expectedData: { assert: 'greater', key: 'length', value: 0 }
       },
       {
         test: 'verify static file (default root)',
@@ -436,7 +452,7 @@ tester.test([
         inputData: {
           path: '/public/package.json'
         },
-        expectedData: { assert: 'greater', key: '$outputData.length', value: 0 }
+        expectedData: { assert: 'greater', key: 'length', value: 0 }
       },
       {
         test: 'verify get',
@@ -479,20 +495,25 @@ tester.test([
         expectedData: { assert: 'ok' }
       },
       {
-        test: 'verify (default) root',
-        command: 'verifyRoot',
+        test: 'verify (default) index',
+        command: 'verifyIndex',
         inputData: {
           default: true
         },
         expectedData: { assert: 'equal', value: '<html><head></head><body></body></html>' }
       },
       {
-        test: 'verify root',
-        command: 'verifyRoot',
+        test: 'verify index',
+        command: 'verifyIndex',
         inputData: {
           default: false
         },
-        expectedData: { assert: 'equal', value: '<my-root>' }
+        expectedData: { assert: 'equal', value: '<index>' }
+      },
+      {
+        test: 'verify cors',
+        command: 'verifyHeader',
+        expectedData: { assert: 'equal', key: 'access-control-allow-origin', value: '*' }
       },
       {
         test: 'stop',

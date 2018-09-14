@@ -110,7 +110,7 @@ function generateAssert (testcase, outputData) {
       }
     } else if (expectedData.assert === 'error') {
       assert.ok(outputData instanceof Error, expectedData.message);
-      if (!expectedData.key) {
+      if (expectedData.key === undefined) {
         assert.strictEqual(outputData.message || undefined, evaluateValue(expectedData.value, objExportData), expectedData.message);
       } else {
         assert.deepStrictEqual(evaluateOutputData(expectedData.key, outputData), evaluateValue(expectedData.value, objExportData), expectedData.message);
@@ -122,13 +122,13 @@ function generateAssert (testcase, outputData) {
 }
 
 function evaluateOutputData (key, outputData) {
-  if (!key) return outputData;
+  if (key === undefined) return outputData;
 
   if (typeof key !== 'string') throw new TestError(`expectedData.key ${JSON.stringify(key)} is invalid`);
 
-  let outputDataKey = (key.indexOf('$outputData') === -1) ? '$outputData.' + key : key;
+  let outputDataKey = (key.indexOf('$outputData') === -1) ? '$outputData["' + key + '"]' : key;
   try {
-    return evaluateValue(outputDataKey, {'$outputData': outputData});
+    return evaluateValue(outputDataKey, { '$outputData': outputData });
   } catch (err) {
     throw new TestError(`expectedData.key ${JSON.stringify(key)} cannot be evaluated`);
   }

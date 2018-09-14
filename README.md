@@ -59,7 +59,8 @@ A web server plug-in
   ```
   options:
   {
-    port: 0
+    port: 0,
+    cors: false
   }
   ```
 - start() => Promise
@@ -75,3 +76,18 @@ A web server plug-in
 - delete(path, <Function(req, res)>)
 #### Limitation
 - Not support HTTPS
+
+### tester-plugin-browser
+A browser plug-in
+#### API
+- constructor([options])
+  ```
+  options:
+  {
+    webSecurity: true
+  }
+  ```
+- connect([url]) => Promise
+- close() => Promise
+- importJSModule(path, name) => Promise
+- evaluate(<Function(...args)>, ...args) => Promise<object>
