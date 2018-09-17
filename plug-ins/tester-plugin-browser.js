@@ -2,23 +2,18 @@ const puppeteer = require('puppeteer');
 
 class Browser {
   constructor (options = {}) {
-    this._webSecurity = (options.webSecurity !== undefined) ? options.webSecurity : true;
+    this._webSecurity = (options.webSecurity == null) ? true : options.webSecurity;
     this._browser = null;
     this._page = null;
   }
 
   async connect (url = 'about:blank') {
     let browserOptions = ['--no-sandbox'];
-    if (!this._webSecurity) browserOptions.push('--disable-web-security');
+    if (this._webSecurity === false) browserOptions.push('--disable-web-security');
 
     this._browser = await puppeteer.launch({ args: browserOptions });
     this._page = await this._browser.newPage();
     await this._page.goto(url);
-
-    // Dummy
-    this._page.on('console', msg => {
-      console.log('Browser Log: ' + msg.text());
-    });
   }
 
   async close () {

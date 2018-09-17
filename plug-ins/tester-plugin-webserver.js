@@ -20,8 +20,8 @@ class WebServer {
   }
 
   get url () {
-    let addressInfo = this._server.address();
-    return `${this._protocol}://${addressInfo.address}:${addressInfo.port}`;
+    let address = this._server.address();
+    return `${this._protocol}://${this._host}:${address.port}`;
   }
 
   async start () {
@@ -58,47 +58,47 @@ class WebServer {
     this._app.use(fn);
   }
 
-  static (urlPath, folder) {
-    if (folder === undefined) {
-      folder = urlPath;
-      urlPath = '/';
+  static (pathURL, folder) {
+    if (folder == null) {
+      folder = pathURL;
+      pathURL = '/';
     }
-    if (urlPath === null) urlPath = '/';
+    if (pathURL == null) pathURL = '/';
 
-    this._app.use(urlPath, express.static(path.join(__dirname, folder)));
+    this._app.use(pathURL, express.static(path.join(__dirname, folder)));
   }
 
-  staticFile (urlPath, file) {
-    if (file === undefined) {
-      file = urlPath;
-      urlPath = '';
+  staticFile (pathURL, file) {
+    if (file == null) {
+      file = pathURL;
+      pathURL = '';
     }
-    if (urlPath === null) urlPath = '';
-    if (urlPath === '/') urlPath = '';
+    if (pathURL == null) pathURL = '';
+    if (pathURL === '/') pathURL = '';
 
-    this._app.use(`${urlPath}/${path.basename(file)}`, (req, res, next) => {
+    this._app.use(`${pathURL}/${path.basename(file)}`, (req, res, next) => {
       res.sendFile(path.join(__dirname, file));
     });
   }
 
-  get (urlPath, fn) {
-    this._app.get(urlPath, fn);
+  get (pathURL, fn) {
+    this._app.get(pathURL, fn);
   }
 
-  post (urlPath, fn) {
-    this._app.post(urlPath, fn);
+  post (pathURL, fn) {
+    this._app.post(pathURL, fn);
   }
 
-  put (urlPath, fn) {
-    this._app.put(urlPath, fn);
+  put (pathURL, fn) {
+    this._app.put(pathURL, fn);
   }
 
-  patch (urlPath, fn) {
-    this._app.patch(urlPath, fn);
+  patch (pathURL, fn) {
+    this._app.patch(pathURL, fn);
   }
 
-  delete (urlPath, fn) {
-    this._app.delete(urlPath, fn);
+  delete (pathURL, fn) {
+    this._app.delete(pathURL, fn);
   }
 }
 

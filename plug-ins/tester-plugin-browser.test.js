@@ -46,8 +46,6 @@ tester.use([
       let result = await browser.evaluate((arg) => window.myModule.hello(arg), 'world');
 
       if (result !== 'hello world') throw new Error();
-
-      return result;
     }
   },
   {

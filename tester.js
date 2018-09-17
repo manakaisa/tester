@@ -1,7 +1,7 @@
 const assert = require('assert');
 const vm = require('vm');
 
-var mapGlobalVars = new Map();
+var mapGlobals = new Map();
 var mapCommands = new Map();
 var objExportData = {};
 
@@ -13,12 +13,12 @@ class TestError extends Error {
 }
 
 var tester = {
-  get: (value) => {
-    return process.env[value] || mapGlobalVars.get(value);
+  get: (key) => {
+    return (mapGlobals.has(key)) ? mapGlobals.get(key) : process.env[key];
   },
 
   set: (key, value) => {
-    mapGlobalVars.set(key, value);
+    mapGlobals.set(key, value);
   },
 
   use: (commands) => {
@@ -59,14 +59,13 @@ function generateDescription (testGroup) {
 }
 
 function generateTest (testcase) {
-  if (testcase.skip) {
+  if (testcase.skip === true) {
     it.skip(testcase.test);
     return;
   }
 
   it(testcase.test, async function () {
     let command = mapCommands.get(testcase.command).command;
-
     await command(evaluateValue(testcase.inputData, objExportData))
       .then((outputData) => {
         generateAssert(testcase, outputData);
@@ -93,9 +92,9 @@ function generateAssert (testcase, outputData) {
     } else if (expectedData.assert === 'notEqual') {
       assert.notDeepStrictEqual(evaluateOutputData(expectedData.key, outputData), evaluateValue(expectedData.value, objExportData), expectedData.message);
     } else if (expectedData.assert === 'undefined') {
-      assert.deepStrictEqual(evaluateOutputData(expectedData.key, outputData), undefined, expectedData.message);
+      assert.strictEqual(evaluateOutputData(expectedData.key, outputData), undefined, expectedData.message);
     } else if (expectedData.assert === 'notUndefined') {
-      assert.notDeepStrictEqual(evaluateOutputData(expectedData.key, outputData), undefined, expectedData.message);
+      assert.notStrictEqual(evaluateOutputData(expectedData.key, outputData), undefined, expectedData.message);
     } else if (expectedData.assert === 'greater') {
       assert.ok(evaluateOutputData(expectedData.key, outputData) > evaluateValue(expectedData.value, objExportData), expectedData.message);
     } else if (expectedData.assert === 'less') {
@@ -110,8 +109,8 @@ function generateAssert (testcase, outputData) {
       }
     } else if (expectedData.assert === 'error') {
       assert.ok(outputData instanceof Error, expectedData.message);
-      if (expectedData.key === undefined) {
-        assert.strictEqual(outputData.message || undefined, evaluateValue(expectedData.value, objExportData), expectedData.message);
+      if (expectedData.key == null) {
+        assert.strictEqual(outputData.message, (expectedData.value == null) ? '' : evaluateValue(expectedData.value, objExportData), expectedData.message);
       } else {
         assert.deepStrictEqual(evaluateOutputData(expectedData.key, outputData), evaluateValue(expectedData.value, objExportData), expectedData.message);
       }
@@ -122,7 +121,7 @@ function generateAssert (testcase, outputData) {
 }
 
 function evaluateOutputData (key, outputData) {
-  if (key === undefined) return outputData;
+  if (key == null) return outputData;
 
   if (typeof key !== 'string') throw new TestError(`expectedData.key ${JSON.stringify(key)} is invalid`);
 
@@ -141,9 +140,7 @@ function evaluateValue (obj, sourceData) {
     }
   } else if (Array.isArray(obj)) {
     obj.forEach((item, index) => { obj[index] = evaluateValue(item, sourceData); });
-  } else if (typeof obj === 'string') {
-    if (obj.indexOf('$') === -1) return obj;
-
+  } else if (typeof obj === 'string' && obj.indexOf('$') !== -1) {
     let lstMatchedExport = obj.match(/\$\w*/gi);
     lstMatchedExport.forEach((item) => {
       if (!sourceData.hasOwnProperty(item)) throw new TestError(`exportData ${JSON.stringify(item)} is undefined`);

@@ -94,7 +94,15 @@ tester.test([
         test: 'typeof',
         command: 'general',
         inputData: { foo: 'bar' },
-        expectedData: { assert: 'typeof', value: 'object' }
+        expectedData: [
+          { assert: 'typeof', value: 'object' },
+          { assert: 'typeof', key: 'foo', value: 'string' }
+        ]
+      },
+      {
+        test: 'ok',
+        command: 'general',
+        expectedData: { assert: 'ok' }
       },
       {
         description: 'error',
@@ -111,34 +119,6 @@ tester.test([
             expectedData: { assert: 'error', value: 'error foo' }
           }
         ]
-      },
-      {
-        test: 'ok',
-        command: 'general',
-        expectedData: { assert: 'ok' }
-      }
-    ]
-  }
-]);
-
-tester.test([
-  {
-    description: 'tester.test (expectedData)',
-    testcases: [
-      {
-        test: '[expectedData]',
-        command: 'general',
-        inputData: { foo: 'bar' },
-        expectedData: [
-          { assert: 'typeof', value: 'object' },
-          { assert: 'equal', value: { foo: 'bar' } }
-        ]
-      },
-      {
-        test: 'expectedData.key',
-        command: 'general',
-        inputData: { foo: 'bar' },
-        expectedData: { assert: 'equal', key: 'foo', value: 'bar' }
       }
     ]
   }
@@ -170,8 +150,8 @@ tester.test([
       {
         test: 'export (advance)',
         command: 'general',
-        inputData: ['$output', '$output.foo'],
-        expectedData: { assert: 'equal', value: ['$output', '$output.foo'] }
+        inputData: ['$output', { foo: '$output.foo' }],
+        expectedData: { assert: 'equal', value: ['$output', { foo: '$output.foo' }] }
       }
     ]
   }
@@ -185,48 +165,46 @@ tester.test({
   skip: true
 });
 
-tester.test([
-  {
-    description: 'error cases',
-    testcases: [
-      {
-        test: 'invalid expectedData.assert #error_ok',
-        command: 'general',
-        expectedData: { assert: 'some_assert' }
-      },
-      {
-        test: 'invalid exportData #error_ok',
-        command: 'general',
-        inputData: { foo: 'bar' },
-        expectedData: { assert: 'ok' },
-        exportData: '1output'
-      },
-      {
-        test: 'undefined exportData #error_ok',
-        command: 'general',
-        inputData: '$1output',
-        expectedData: { assert: 'ok' }
-      },
-      {
-        test: 'invalid evaluation #error_ok',
-        command: 'general',
-        inputData: '$output()',
-        expectedData: { assert: 'ok' }
-      },
-      {
-        test: 'error on assert.ok #error_ok',
-        command: 'error',
-        expectedData: { assert: 'ok' }
-      },
-      {
-        test: 'application error #error_ok',
-        command: 'error',
-        inputData: { foo: 'bar' },
-        expectedData: { assert: 'equal', value: { foo: 'bar' }, message: 'some message' }
-      }
-    ]
-  }
-]);
+tester.test({
+  description: 'error cases',
+  testcases: [
+    {
+      test: 'invalid expectedData.assert #error_ok',
+      command: 'general',
+      expectedData: { assert: 'some_assert' }
+    },
+    {
+      test: 'invalid exportData #error_ok',
+      command: 'general',
+      inputData: { foo: 'bar' },
+      expectedData: { assert: 'ok' },
+      exportData: '1output'
+    },
+    {
+      test: 'undefined exportData #error_ok',
+      command: 'general',
+      inputData: '$1output',
+      expectedData: { assert: 'ok' }
+    },
+    {
+      test: 'invalid evaluation #error_ok',
+      command: 'general',
+      inputData: '$output()',
+      expectedData: { assert: 'ok' }
+    },
+    {
+      test: 'error on assert.ok #error_ok',
+      command: 'error',
+      expectedData: { assert: 'ok' }
+    },
+    {
+      test: 'error message #error_ok',
+      command: 'error',
+      inputData: { foo: 'bar' },
+      expectedData: { assert: 'equal', value: { foo: 'bar' }, message: 'some message' }
+    }
+  ]
+});
 
 afterEach(function () {
   if (this.currentTest.title.indexOf('#error_ok') > -1 && this.currentTest.state === 'passed') {

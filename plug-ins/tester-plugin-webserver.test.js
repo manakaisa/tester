@@ -264,12 +264,36 @@ tester.use([
   },
   {
     name: 'verifyIndex',
-    command: async (inputData) => {
-      if (inputData.default) {
-        defaultIndex = true;
-      } else {
-        defaultIndex = false;
-      }
+    command: async () => {
+      defaultIndex = false;
+
+      return new Promise((resolve, reject) => {
+        let url = new URL(webserver.url);
+        http.request({
+          hostname: url.hostname,
+          port: url.port,
+          path: '/',
+          method: 'GET'
+        })
+          .on('response', (res) => {
+            if (res.statusCode !== 200) throw new Error(res.statusCode);
+
+            res.setEncoding('utf8');
+            res.on('readable', () => {
+              resolve(res.read());
+            });
+          })
+          .on('error', (err) => {
+            reject(err);
+          })
+          .end();
+      });
+    }
+  },
+  {
+    name: 'verifyIndexDefault',
+    command: async () => {
+      defaultIndex = true;
 
       return new Promise((resolve, reject) => {
         let url = new URL(webserver.url);
@@ -301,7 +325,7 @@ tester.use([
         http.get(webserver.url)
           .on('response', (res) => {
             if (res.statusCode !== 200) throw new Error(res.statusCode);
-            
+
             resolve(res.headers);
           })
           .on('error', (err) => {
@@ -415,7 +439,7 @@ tester.test([
       {
         test: 'url',
         command: 'url',
-        expectedData: { assert: 'equal', value: 'http://127.0.0.1:3000' }
+        expectedData: { assert: 'equal', value: 'http://localhost:3000' }
       },
       {
         test: 'verify use',
@@ -496,18 +520,12 @@ tester.test([
       },
       {
         test: 'verify (default) index',
-        command: 'verifyIndex',
-        inputData: {
-          default: true
-        },
+        command: 'verifyIndexDefault',
         expectedData: { assert: 'equal', value: '<html><head></head><body></body></html>' }
       },
       {
         test: 'verify index',
         command: 'verifyIndex',
-        inputData: {
-          default: false
-        },
         expectedData: { assert: 'equal', value: '<index>' }
       },
       {
