@@ -79,7 +79,7 @@ function generateTest (testcase) {
       .catch((err) => {
         if (err instanceof assert.AssertionError || err instanceof TestError) throw err;
 
-        generateAssert(testcase, err);
+        generateAssertForError(testcase, err);
       });
   });
 }
@@ -102,17 +102,37 @@ function generateAssert (testcase, outputData) {
     } else if (expectedData.assert === 'typeof') {
       assert.strictEqual(typeof evaluateOutputData(expectedData.key, outputData), evaluateValue(expectedData.value, objExportData), expectedData.message);
     } else if (expectedData.assert === 'ok') {
-      if (outputData instanceof Error) {
-        assert.fail(expectedData.message || 'Error');
-      } else {
-        assert.ok(true);
-      }
+      assert.ok(true);
     } else if (expectedData.assert === 'error') {
-      assert.ok(outputData instanceof Error, expectedData.message);
-      if (expectedData.key == null) {
-        assert.strictEqual(outputData.message, (expectedData.value == null) ? '' : evaluateValue(expectedData.value, objExportData), expectedData.message);
-      } else {
-        assert.deepStrictEqual(evaluateOutputData(expectedData.key, outputData), evaluateValue(expectedData.value, objExportData), expectedData.message);
+      assert.strictEqual(outputData, new Error(), expectedData.message);
+    } else {
+      throw new TestError(`expectedData.assert ${JSON.stringify(expectedData.assert)} is not recognized`);
+    }
+  });
+}
+
+function generateAssertForError (testcase, err) {
+  let lstExpectedData = Array.isArray(testcase.expectedData) ? testcase.expectedData : [testcase.expectedData];
+  lstExpectedData.forEach((expectedData) => {
+    if (expectedData.assert === 'equal') {
+      assert.fail(expectedData.message || err.message);
+    } else if (expectedData.assert === 'notEqual') {
+      assert.fail(expectedData.message || err.message);
+    } else if (expectedData.assert === 'undefined') {
+      assert.fail(expectedData.message || err.message);
+    } else if (expectedData.assert === 'notUndefined') {
+      assert.fail(expectedData.message || err.message);
+    } else if (expectedData.assert === 'greater') {
+      assert.fail(expectedData.message || err.message);
+    } else if (expectedData.assert === 'less') {
+      assert.fail(expectedData.message || err.message);
+    } else if (expectedData.assert === 'typeof') {
+      assert.fail(expectedData.message || err.message);
+    } else if (expectedData.assert === 'ok') {
+      assert.fail(expectedData.message || err.message);
+    } else if (expectedData.assert === 'error') {
+      if (expectedData.value != null) {
+        assert.strictEqual(evaluateOutputData(expectedData.key || 'message', err), evaluateValue(expectedData.value, objExportData), expectedData.message);
       }
     } else {
       throw new TestError(`expectedData.assert ${JSON.stringify(expectedData.assert)} is not recognized`);

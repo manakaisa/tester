@@ -84,7 +84,8 @@ A browser plug-in
   ```
   options:
   {
-    webSecurity: true
+    webSecurity: true,
+    debug: false
   }
   ```
 - connect([url]) => Promise

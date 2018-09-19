@@ -5,6 +5,7 @@ class Browser {
     this._webSecurity = (options.webSecurity == null) ? true : options.webSecurity;
     this._browser = null;
     this._page = null;
+    this._debug = options.debug;
   }
 
   async connect (url = 'about:blank') {
@@ -14,6 +15,12 @@ class Browser {
     this._browser = await puppeteer.launch({ args: browserOptions });
     this._page = await this._browser.newPage();
     await this._page.goto(url);
+
+    if (this._debug === true) {
+      this._page.on('console', msg => {
+        console.log(msg.text());
+      });
+    }
   }
 
   async close () {
