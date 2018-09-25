@@ -76,6 +76,7 @@ A web server plug-in
 - delete(path, <Function(req, res)>)
 #### Limitation
 - Not support HTTPS
+- Methods: "use", "static|staticFile", "get|post|put|patch|delete" must be called in order and before "start" method
 
 ### tester-plugin-browser
 A browser plug-in

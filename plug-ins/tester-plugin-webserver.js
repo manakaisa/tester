@@ -10,6 +10,9 @@ class WebServer {
     this._app = express();
     this._server = http.createServer(this._app);
 
+    this._app.use(express.json());
+    this._app.use(express.urlencoded({ extended: false }));
+
     if (options.cors === true) {
       this._app.use((req, res, next) => {
         res.header('access-control-allow-origin', '*');
@@ -27,6 +30,14 @@ class WebServer {
   async start () {
     this._app.get('/', (req, res) => {
       res.send(`<html><head></head><body></body></html>`);
+    });
+
+    this._app.use((req, res) => {
+      res.status(404).send();
+    });
+
+    this._app.use((err, req, res, next) => {
+      res.status(500).send(err.message);
     });
 
     return new Promise((resolve, reject) => {

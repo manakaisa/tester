@@ -5,6 +5,7 @@
   "extends": "standard",
   "rules": {
     "semi": ["error", "always"],
-    "no-trailing-spaces": ["error", { "skipBlankLines": true }]
+    "no-trailing-spaces": ["error", { "skipBlankLines": true }],
+    "no-new-func": "off"
   }
 }

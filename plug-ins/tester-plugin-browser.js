@@ -41,8 +41,63 @@ class Browser {
     });
   }
 
+  // async evaluate (fn, ...args) {
+  //   return this._page
+  //     .evaluate(fn, ...args)
+  //     .catch((err) => {
+  //       let lstErrMsg = err.message.split('\n');
+  //       lstErrMsg = lstErrMsg[0].split(': ');
+  //       err.message = lstErrMsg[lstErrMsg.length - 1];
+  //       throw err;
+  //     });
+  // }
+
   async evaluate (fn, ...args) {
-    return this._page.evaluate(fn, ...args);
+    let script = `
+      let fn = ${fn.toString()};
+      try {
+        let result = fn(...args);
+
+        if(result && result.then) {
+          return new Promise((resolve, reject) => {
+            result.then((resultPromise) => {
+              resolve({
+                result: resultPromise,
+                isError: false,
+                errorMessage: null
+              });
+            }).catch((err) => {
+              resolve({
+                result: null,
+                isError: true,
+                errorMessage: err.message
+              });
+            });
+          });
+        } else {
+          return {
+            result: result,
+            isError: false,
+            errorMessage: null
+          };
+        }
+      } catch (err) {
+        return {
+          result: null,
+          isError: true,
+          errorMessage: err.message
+        };
+      }
+    `;
+    let result = await this._page.evaluate(new Function('...args', script), ...args);
+
+    if (result.isError) throw new Error(result.errorMessage);
+
+    return result.result;
+  }
+
+  async setOfflineMode (enabled) {
+    return this._page.setOfflineMode(enabled);
   }
 }
 

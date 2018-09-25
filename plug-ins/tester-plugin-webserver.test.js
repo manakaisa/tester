@@ -120,12 +120,28 @@ tester.use([
     }
   },
   {
+    name: 'handledError',
+    command: async (inputData) => {
+      webserver.get(inputData.path, (req, res) => {
+        res.status(inputData.status).send(inputData.message);
+      });
+    }
+  },
+  {
+    name: 'unHandledError',
+    command: async (inputData) => {
+      webserver.get(inputData.path, (req, res) => {
+        throw new Error(inputData.message);
+      });
+    }
+  },
+  {
     name: 'verifyUse',
     command: async () => {
       await new Promise((resolve, reject) => {
         http.get(webserver.url)
           .on('response', (res) => {
-            if (!verifiedUse) throw new Error();
+            if (!verifiedUse) return reject(new Error());
 
             resolve();
           })
@@ -141,7 +157,7 @@ tester.use([
       return new Promise((resolve, reject) => {
         http.get(webserver.url + inputData.path)
           .on('response', (res) => {
-            if (res.statusCode !== 200) throw new Error(res.statusCode);
+            if (res.statusCode !== 200) return reject(new Error(res.statusCode));
 
             res.setEncoding('utf8');
             res.on('readable', () => {
@@ -160,7 +176,7 @@ tester.use([
       await new Promise((resolve, reject) => {
         http.get(webserver.url + inputData.path)
           .on('response', (res) => {
-            if (!verifiedGet) throw new Error();
+            if (!verifiedGet) return reject(new Error());
 
             resolve();
           })
@@ -182,7 +198,7 @@ tester.use([
           method: 'POST'
         })
           .on('response', (res) => {
-            if (!verifiedPost) throw new Error();
+            if (!verifiedPost) return reject(new Error());
 
             resolve();
           })
@@ -205,7 +221,7 @@ tester.use([
           method: 'PUT'
         })
           .on('response', (res) => {
-            if (!verifiedPut) throw new Error();
+            if (!verifiedPut) return reject(new Error());
 
             resolve();
           })
@@ -228,7 +244,7 @@ tester.use([
           method: 'PATCH'
         })
           .on('response', (res) => {
-            if (!verifiedPatch) throw new Error();
+            if (!verifiedPatch) return reject(new Error());
 
             resolve();
           })
@@ -251,7 +267,7 @@ tester.use([
           method: 'DELETE'
         })
           .on('response', (res) => {
-            if (!verifiedDelete) throw new Error();
+            if (!verifiedDelete) return reject(new Error());
 
             resolve();
           })
@@ -276,7 +292,7 @@ tester.use([
           method: 'GET'
         })
           .on('response', (res) => {
-            if (res.statusCode !== 200) throw new Error(res.statusCode);
+            if (res.statusCode !== 200) return reject(new Error(res.statusCode));
 
             res.setEncoding('utf8');
             res.on('readable', () => {
@@ -304,7 +320,7 @@ tester.use([
           method: 'GET'
         })
           .on('response', (res) => {
-            if (res.statusCode !== 200) throw new Error(res.statusCode);
+            if (res.statusCode !== 200) return reject(new Error(res.statusCode));
 
             res.setEncoding('utf8');
             res.on('readable', () => {
@@ -324,13 +340,40 @@ tester.use([
       return new Promise((resolve, reject) => {
         http.get(webserver.url)
           .on('response', (res) => {
-            if (res.statusCode !== 200) throw new Error(res.statusCode);
+            if (res.statusCode !== 200) return reject(new Error(res.statusCode));
 
             resolve(res.headers);
           })
           .on('error', (err) => {
             reject(err);
           });
+      });
+    }
+  },
+  {
+    name: 'verifyError',
+    command: async (inputData) => {
+      return new Promise((resolve, reject) => {
+        let url = new URL(webserver.url);
+        http.request({
+          hostname: url.hostname,
+          port: url.port,
+          path: inputData.path,
+          method: 'GET'
+        })
+          .on('response', (res) => {
+            res.setEncoding('utf8');
+            res.on('readable', () => {
+              resolve({
+                status: res.statusCode,
+                message: res.read()
+              });
+            });
+          })
+          .on('error', (err) => {
+            reject(err);
+          })
+          .end();
       });
     }
   }
@@ -422,6 +465,25 @@ tester.test([
       {
         test: 'index',
         command: 'index',
+        expectedData: { assert: 'ok' }
+      },
+      {
+        test: 'error (handled)',
+        command: 'handledError',
+        inputData: {
+          path: '/error',
+          status: 501,
+          message: 'handled error'
+        },
+        expectedData: { assert: 'ok' }
+      },
+      {
+        test: 'error (unhandled)',
+        command: 'unHandledError',
+        inputData: {
+          path: '/error2',
+          message: 'unhandled error'
+        },
         expectedData: { assert: 'ok' }
       }
     ]
@@ -532,6 +594,30 @@ tester.test([
         test: 'verify cors',
         command: 'verifyHeader',
         expectedData: { assert: 'equal', key: 'access-control-allow-origin', value: '*' }
+      },
+      {
+        test: 'verify error 404',
+        command: 'verifyError',
+        inputData: {
+          path: '/some_path'
+        },
+        expectedData: { assert: 'equal', value: { status: 404, message: null } }
+      },
+      {
+        test: 'verify error 501 (handled)',
+        command: 'verifyError',
+        inputData: {
+          path: '/error'
+        },
+        expectedData: { assert: 'equal', value: { status: 501, message: 'handled error' } }
+      },
+      {
+        test: 'verify error 500 (unhandled)',
+        command: 'verifyError',
+        inputData: {
+          path: '/error2'
+        },
+        expectedData: { assert: 'equal', value: { status: 500, message: 'unhandled error' } }
       },
       {
         test: 'stop',

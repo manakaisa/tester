@@ -4,8 +4,8 @@
   "description": "",
   "scripts": {
     "test": "mocha tester.test.js",
-    "test-plugin-webserver": "mocha plug-ins/tester-plugin-webserver.test.js --timeout 10000",
-    "test-plugin-browser": "mocha plug-ins/tester-plugin-browser.test.js --timeout 10000"
+    "test-plugin-webserver": "mocha plug-ins/tester-plugin-webserver.test.js --timeout 30000",
+    "test-plugin-browser": "mocha plug-ins/tester-plugin-browser.test.js --timeout 30000"
   },
   "devDependencies": {
     "eslint": "^5.2.0",

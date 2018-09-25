@@ -3,7 +3,7 @@ const Webserver = require('./tester-plugin-webserver.js');
 const Browser = require('./tester-plugin-browser.js');
 
 var webserver = new Webserver();
-var browser = new Browser();
+var browser = new Browser({ debug: true });
 
 tester.beforeTest(async () => {
   webserver.get('/my-module.js', (req, res) => {
@@ -43,9 +43,33 @@ tester.use([
   {
     name: 'evaluate',
     command: async () => {
-      let result = await browser.evaluate((arg) => window.myModule.hello(arg), 'world');
+      let result = await browser.evaluate(arg => window.myModule.hello(arg), 'world');
 
       if (result !== 'hello world') throw new Error();
+    }
+  },
+  {
+    name: 'evaluateAsync',
+    command: async () => {
+      let result = await browser.evaluate(async arg => window.myModule.hello(arg), 'world');
+
+      if (result !== 'hello world') throw new Error();
+    }
+  },
+  {
+    name: 'evaluateError',
+    command: async (inputData) => {
+      return browser.evaluate(msg => {
+        throw new Error(msg);
+      }, inputData.message);
+    }
+  },
+  {
+    name: 'evaluateErrorAsync',
+    command: async (inputData) => {
+      return browser.evaluate(async msg => {
+        throw new Error(msg);
+      }, inputData.message);
     }
   },
   {
@@ -76,6 +100,27 @@ tester.test({
       test: 'evaluate',
       command: 'evaluate',
       expectedData: { assert: 'ok' }
+    },
+    {
+      test: 'evaluate (async)',
+      command: 'evaluateAsync',
+      expectedData: { assert: 'ok' }
+    },
+    {
+      test: 'evaluate (error)',
+      command: 'evaluateError',
+      inputData: {
+        message: 'some error'
+      },
+      expectedData: { assert: 'error', value: 'some error' }
+    },
+    {
+      test: 'evaluate (async, error)',
+      command: 'evaluateErrorAsync',
+      inputData: {
+        message: 'some error'
+      },
+      expectedData: { assert: 'error', value: 'some error' }
     },
     {
       test: 'verifyWebSecurity',

@@ -14,7 +14,7 @@ class TestError extends Error {
 
 var tester = {
   get: (key) => {
-    return (mapGlobals.has(key)) ? mapGlobals.get(key) : process.env[key];
+    return mapGlobals.has(key) ? mapGlobals.get(key) : process.env[key];
   },
 
   set: (key, value) => {
@@ -143,10 +143,9 @@ function generateAssertForError (testcase, err) {
 function evaluateOutputData (key, outputData) {
   if (key == null) return outputData;
 
-  if (typeof key !== 'string') throw new TestError(`expectedData.key ${JSON.stringify(key)} is invalid`);
-
-  let outputDataKey = (key.indexOf('$outputData') === -1) ? '$outputData["' + key + '"]' : key;
   try {
+    let outputDataKey = (key.indexOf('$outputData') === -1) ? '$outputData["' + key + '"]' : key;
+
     return evaluateValue(outputDataKey, { '$outputData': outputData });
   } catch (err) {
     throw new TestError(`expectedData.key ${JSON.stringify(key)} cannot be evaluated`);
@@ -166,8 +165,8 @@ function evaluateValue (obj, sourceData) {
       if (!sourceData.hasOwnProperty(item)) throw new TestError(`exportData ${JSON.stringify(item)} is undefined`);
     });
 
-    let sandbox = { source: sourceData };
     try {
+      let sandbox = { source: sourceData };
       vm.runInNewContext('evaledExportValue = source.' + obj, sandbox);
       return sandbox.evaledExportValue;
     } catch (err) {

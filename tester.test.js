@@ -110,7 +110,6 @@ tester.test([
           {
             test: 'error (any)',
             command: 'error',
-            inputData: 'error foo',
             expectedData: { assert: 'error' }
           },
           {
@@ -194,13 +193,13 @@ tester.test({
       expectedData: { assert: 'ok' }
     },
     {
-      test: 'error on assert.ok #error_ok',
+      test: 'error on non-error assert #error_ok',
       command: 'error',
       inputData: 'error foo',
       expectedData: { assert: 'ok' }
     },
     {
-      test: 'non error on assert.error #error_ok',
+      test: 'non-error on assert.error #error_ok',
       command: 'general',
       inputData: { foo: 'bar' },
       expectedData: { assert: 'error' }
@@ -208,7 +207,6 @@ tester.test({
     {
       test: 'error message #error_ok',
       command: 'error',
-      inputData: 'error foo',
       expectedData: { assert: 'equal', message: 'some message' }
     }
   ]
