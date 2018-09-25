@@ -27,7 +27,7 @@ class Browser {
     return this._browser.close();
   }
 
-  async importJSModule (path, name) {
+  async importJSModuleAsNameSpace (path, name) {
     await this._page.addScriptTag({
       type: 'module',
       url: path
@@ -36,6 +36,20 @@ class Browser {
       type: 'module',
       content: `
         import * as ${name} from '${path}';
+        window.${name} = ${name};
+      `
+    });
+  }
+
+  async importJSModuleAsDefault (path, name) {
+    await this._page.addScriptTag({
+      type: 'module',
+      url: path
+    });
+    await this._page.addScriptTag({
+      type: 'module',
+      content: `
+        import ${name} from '${path}';
         window.${name} = ${name};
       `
     });

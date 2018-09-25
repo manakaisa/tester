@@ -12,6 +12,9 @@ tester.beforeTest(async () => {
       export function hello (value) {
         return 'hello ' + value;
       }
+      export default function (value) {
+        return 'hello ' + value;
+      }
     `);
   });
   await webserver.start();
@@ -35,15 +38,21 @@ tester.use([
     }
   },
   {
-    name: 'importJSModule',
+    name: 'importJSModuleAsNameSpace',
     command: async () => {
-      return browser.importJSModule('./my-module.js', 'myModule');
+      return browser.importJSModuleAsNameSpace('./my-module.js', 'myModuleNameSpace');
+    }
+  },
+  {
+    name: 'importJSModuleAsDefault',
+    command: async () => {
+      return browser.importJSModuleAsDefault('./my-module.js', 'myModuleDefault');
     }
   },
   {
     name: 'evaluate',
     command: async () => {
-      let result = await browser.evaluate(arg => window.myModule.hello(arg), 'world');
+      let result = await browser.evaluate(arg => window.myModuleNameSpace.hello(arg), 'world');
 
       if (result !== 'hello world') throw new Error();
     }
@@ -51,7 +60,7 @@ tester.use([
   {
     name: 'evaluateAsync',
     command: async () => {
-      let result = await browser.evaluate(async arg => window.myModule.hello(arg), 'world');
+      let result = await browser.evaluate(async arg => window.myModuleDefault(arg), 'world');
 
       if (result !== 'hello world') throw new Error();
     }
@@ -77,7 +86,7 @@ tester.use([
     command: async () => {
       let browser2 = new Browser({ webSecurity: false });
       await browser2.connect();
-      await browser2.importJSModule(webserver.url + '/my-module.js', 'myModule');
+      await browser2.importJSModuleAsNameSpace(webserver.url + '/my-module.js', 'myModule');
       await browser2.close();
     }
   }
@@ -92,8 +101,13 @@ tester.test({
       expectedData: { assert: 'ok' }
     },
     {
-      test: 'importJSModule',
-      command: 'importJSModule',
+      test: 'importJSModuleAsNameSpace',
+      command: 'importJSModuleAsNameSpace',
+      expectedData: { assert: 'ok' }
+    },
+    {
+      test: 'importJSModuleAsDefault',
+      command: 'importJSModuleAsDefault',
       expectedData: { assert: 'ok' }
     },
     {
