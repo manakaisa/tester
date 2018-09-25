@@ -32,13 +32,9 @@ class WebServer {
       res.send(`<html><head></head><body></body></html>`);
     });
 
-    this._app.use((req, res) => {
-      res.status(404).send();
-    });
-
-    this._app.use((err, req, res, next) => {
-      res.status(500).send(err.message);
-    });
+    // this._app.use((err, req, res, next) => {
+    //   res.status(500).send(err.message);
+    // });
 
     return new Promise((resolve, reject) => {
       this._server

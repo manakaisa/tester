@@ -131,7 +131,7 @@ tester.use([
     name: 'unHandledError',
     command: async (inputData) => {
       webserver.get(inputData.path, (req, res) => {
-        throw new Error(inputData.message);
+        throw new Error();
       });
     }
   },
@@ -481,8 +481,7 @@ tester.test([
         test: 'error (unhandled)',
         command: 'unHandledError',
         inputData: {
-          path: '/error2',
-          message: 'unhandled error'
+          path: '/error2'
         },
         expectedData: { assert: 'ok' }
       }
@@ -601,7 +600,7 @@ tester.test([
         inputData: {
           path: '/some_path'
         },
-        expectedData: { assert: 'equal', value: { status: 404, message: null } }
+        expectedData: { assert: 'equal', key: 'status', value: 404 }
       },
       {
         test: 'verify error 501 (handled)',
@@ -617,7 +616,7 @@ tester.test([
         inputData: {
           path: '/error2'
         },
-        expectedData: { assert: 'equal', value: { status: 500, message: 'unhandled error' } }
+        expectedData: { assert: 'equal', key: 'status', value: 500 }
       },
       {
         test: 'stop',
