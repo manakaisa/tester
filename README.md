@@ -92,4 +92,4 @@ A browser plug-in
 - connect([url]) => Promise
 - close() => Promise
 - importJSModule(path, name) => Promise
-- evaluate(<Function(...args)>, ...args) => Promise<object>
+- evaluate(<Function(...args)>, ...args) => Promise<object\>
