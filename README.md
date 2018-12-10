@@ -37,11 +37,11 @@ A codeless unit test
         inputData: <any|$exportData>,
         expectedData: [{
           assert: "value of supported assertion",
-          key: "(optional), specify <output>.key to perform test",
+          key: "(optional) specific <output>.key to perform test",
           value: <any|$exportData>,
-          message: "(optional), show message when testing fail"
+          message: "(optional) message shown when testing fail"
         }],
-        exportData: "(optional), define variable for exporting <output>, valid name: /^[A-Za-z_]\w*$/",
+        exportData: "(optional) variable for exporting <output>, valid name: /^[A-Za-z_]\w*$/",
         skip: false
       }
     ]
@@ -63,8 +63,8 @@ A web server plug-in
     cors: false
   }
   ```
-- start() => Promise
-- stop() => Promise
+- start() => <Promise\>
+- stop() => <Promise\>
 - url => <string\>
 - use(<Function(req, res, next)>)
 - static([path,] folder)
@@ -76,7 +76,7 @@ A web server plug-in
 - delete(path, <Function(req, res)>)
 #### Limitation
 - Not support HTTPS
-- Methods: "use", "static|staticFile", "get|post|put|patch|delete" must be called in order and before "start" method
+- Methods "use|static|staticFile|get|post|put|patch|delete" must be called in order and before "start" method
 
 ### tester-plugin-browser
 A browser plug-in
@@ -89,7 +89,7 @@ A browser plug-in
     debug: false
   }
   ```
-- connect([url]) => Promise
-- close() => Promise
-- importJSModule(path, name) => Promise
-- evaluate(<Function(...args)>, ...args) => Promise<object\>
+- connect([url]) => <Promise\>
+- close() => <Promise\>
+- importJSModule(path, name) => <Promise\>
+- evaluate(<Function(...args)>, ...args) => <Promise<object\>>
